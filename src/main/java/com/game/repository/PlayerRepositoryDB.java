@@ -4,6 +4,7 @@ package com.game.repository;
 import com.game.entity.Player;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.query.NativeQuery;
@@ -11,6 +12,8 @@ import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PreDestroy;
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -45,7 +48,11 @@ public class PlayerRepositoryDB implements IPlayerRepository {
                     .setParameter("offset", pageNumber * pageSize);
 
             return query.list();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        return new ArrayList<>();
     }
 
     @Override
@@ -56,27 +63,67 @@ public class PlayerRepositoryDB implements IPlayerRepository {
             Long getAllCountQuery = query.getSingleResult();
 
             return Math.toIntExact(getAllCountQuery);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        return 0;
     }
 
     @Override
     public Player save(Player player) {
-        return null;
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+
+            session.save(player);
+
+            transaction.commit();
+        }  catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return player;
     }
 
     @Override
     public Player update(Player player) {
-        return null;
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+
+            session.update(player);
+
+            transaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return player;
     }
 
     @Override
     public Optional<Player> findById(long id) {
-        return Optional.empty();
+        Optional<Player> player = Optional.empty();
+
+        try (Session session = sessionFactory.openSession()) {
+            player = Optional.of(session.get(Player.class, id));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return player;
     }
 
     @Override
     public void delete(Player player) {
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
 
+            session.remove(player);
+
+            transaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @PreDestroy
